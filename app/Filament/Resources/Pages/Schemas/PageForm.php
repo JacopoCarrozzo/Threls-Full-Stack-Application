@@ -10,8 +10,8 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
-use Filament\Forms\Get;
-use Filament\Forms\Set;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Str;
 
@@ -31,17 +31,20 @@ class PageForm
                             ->label('title')
                             ->required()
                             ->maxLength(255)
-                            ->reactive()
-                            ->afterStateUpdated(function ($state, $set) {
-        $set('slug', \Illuminate\Support\Str::slug($state));
-    }),
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function (Set $set, Get $get, ?string $state) { 
+                                if (empty($get('slug'))) {
+                                $set('slug', \Illuminate\Support\Str::slug($state));
+                                }
+                            }),
 
                         TextInput::make('slug')
                             ->label('Slug URL')
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(255)
-                            ->helperText('Automatically generated from the title, but editable.'),
+                            ->reactive(fn (Get $get): bool => filled($get('slug')))
+                            ->helperText('The slug is automatically generated from the title and updated only if empty (on blur).'),
                     ])
                     ->columns(2),
 
